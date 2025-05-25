@@ -8,7 +8,8 @@ SRC = \
   kernel/threads.c \
   kernel/scheduler.c \
   kernel/uart.c \
-  kernel/irq.c
+  kernel/irq.c \
+  kernel/timer.c
   
 OBJ = $(SRC:.c=.o)
 OBJ := $(OBJ:.S=.o)

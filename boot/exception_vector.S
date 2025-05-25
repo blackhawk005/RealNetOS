@@ -32,7 +32,7 @@ exception_vector:
 
 el1_irq_handler:
     // Acknowledge IRQ (for now just log)
-    ldr x0, =irq_handler
-    blr x0
+    ldr x0, =irq_handler  // load address of a c function (irq_handler in irq.c)
+    blr x0  // Branch and link to the address in x0
 
-    eret  // return from exception
+    eret  // return from exception : this will restore state and retur to interrupt thread

@@ -1,5 +1,5 @@
-#include "threads.h"
 #include "../include/uart.h"
+#include "../include/threads.h"
 
 thread_t threads[MAX_THREADS];
 int current = 0;
