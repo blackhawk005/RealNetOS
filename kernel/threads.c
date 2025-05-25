@@ -3,6 +3,7 @@
 
 thread_t threads[MAX_THREADS];
 int current = 0;
+int last_scheduled[MAX_PRIORITY_LEVELS] = {-1, -1, -1, -1};
 
 extern void switch_context(context_t* old, context_t* new);
 
@@ -35,19 +36,17 @@ void init_threads(){
 
 void schedule(){
     int prev = current;
-    int best_priority = 1000;
-    int next = current;
 
-    for (int i = 0; i <= MAX_THREADS; i++){
-        int idx = (current + i) % MAX_THREADS;
-        if (threads[idx].active && threads[idx].priority < best_priority){
-            best_priority = threads[idx].priority;
-            next = idx;
+    // Scan priority levels from high to low
+    for (int prio = 0; prio < MAX_PRIORITY_LEVELS; prio++){
+        for (int i = 0; i <= MAX_THREADS; i++){
+            int idx = (last_scheduled[prio] + i) % MAX_THREADS;
+            if (threads[idx].active && threads[idx].priority == prio){
+                last_scheduled[prio] = idx;
+                current = idx;
+                switch_context(&threads[prev].ctx, &threads[current].ctx);
+                return;
+            }
         }
-    }
-
-    if (next != current){
-        current = next;
-        switch_context(&threads[prev].ctx, &threads[current].ctx);
     }
 }
