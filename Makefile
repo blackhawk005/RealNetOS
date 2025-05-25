@@ -1,7 +1,15 @@
 CROSS = aarch64-elf
 CFLAGS = -ffreestanding -O0 -nostdlib -nostartfiles -Wall -mcpu=cortex-a72 -march=armv8-a -mabi=lp64
 
-SRC = boot/start.S kernel/main.c kernel/threads.c kernel/scheduler.c kernel/context_switch.S kernel/uart.c
+SRC = \
+  boot/start.S \
+  boot/exception_vector.S \
+  kernel/context_switch.S \
+  kernel/threads.c \
+  kernel/scheduler.c \
+  kernel/uart.c \
+  kernel/irq.c
+  
 OBJ = $(SRC:.c=.o)
 OBJ := $(OBJ:.S=.o)
 
