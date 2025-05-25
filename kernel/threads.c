@@ -24,15 +24,30 @@ void init_threads(){
     threads[0].ctx.sp = (unsigned long)(threads[0].stack + STACK_SIZE);
     threads[0].ctx.lr = (unsigned long)thread_fn1;
     threads[0].active = 1;
+    threads[0].priority = 1;
 
     // Thread 2
     threads[1].ctx.sp = (unsigned long)(threads[1].stack + STACK_SIZE);
     threads[1].ctx.lr = (unsigned long)thread_fn2;
     threads[1].active = 1;
+    threads[1].priority = 0;    // Higher Priority
 }
 
 void schedule(){
     int prev = current;
-    current = (current + 1) % MAX_THREADS;
-    switch_context(&threads[prev].ctx, &threads[current].ctx);
+    int best_priority = 1000;
+    int next = current;
+
+    for (int i = 0; i <= MAX_THREADS; i++){
+        int idx = (current + i) % MAX_THREADS;
+        if (threads[idx].active && threads[idx].priority < best_priority){
+            best_priority = threads[idx].priority;
+            next = idx;
+        }
+    }
+
+    if (next != current){
+        current = next;
+        switch_context(&threads[prev].ctx, &threads[current].ctx);
+    }
 }

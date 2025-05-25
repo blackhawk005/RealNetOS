@@ -24,6 +24,7 @@ typedef struct {
     context_t ctx;
     unsigned char stack[STACK_SIZE];
     int active;
+    int priority;   // Lower number = higher priority
 } thread_t;
 
 
