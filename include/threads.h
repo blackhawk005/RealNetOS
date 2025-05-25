@@ -5,6 +5,8 @@
 #define MAX_PRIORITY_LEVELS 4 // Eg 0 (highest) to 3 (lowest)
 #define STACK_SIZE 4096
 
+extern int last_scheduled[MAX_PRIORITY_LEVELS];
+
 typedef struct {
     unsigned long x19;  // Callee-saved
     unsigned long x20;
