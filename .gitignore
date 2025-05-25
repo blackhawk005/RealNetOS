@@ -3,3 +3,5 @@ build/
 *.elf
 *.o
 .DS_Store
+.dtb
+.dts

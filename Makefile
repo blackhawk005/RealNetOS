@@ -9,7 +9,9 @@ SRC = \
   kernel/scheduler.c \
   kernel/uart.c \
   kernel/irq.c \
-  kernel/timer.c
+  kernel/timer.c \
+  kernel/mem.c \
+  kernel/page.c
   
 OBJ = $(SRC:.c=.o)
 OBJ := $(OBJ:.S=.o)

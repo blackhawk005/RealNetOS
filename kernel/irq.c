@@ -3,7 +3,7 @@
 #include "../include/threads.h"
 
 void irq_handler(){
-    uart_puts("[IRQ] Interrupt Triggered!\n");
+    uart_puts("[IRQ] Timer Fired. Switching...\n");
 
     // Reset Timer
     timer_init();
