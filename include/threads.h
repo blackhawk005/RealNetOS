@@ -6,6 +6,7 @@
 #define STACK_SIZE 4096
 
 extern int last_scheduled[MAX_PRIORITY_LEVELS];
+extern unsigned long system_ticks;
 
 typedef struct {
     unsigned long x19;  // Callee-saved
@@ -27,7 +28,9 @@ typedef struct {
     context_t ctx;
     unsigned char stack[STACK_SIZE];
     int active;
-    int priority;   // Lower number = higher priority
+    int priority;               // Lower number = higher priority
+    unsigned long deadline;     // Lower = higher urgency (Timestamp)
+    unsigned long period;       // For periodic deadline update
 } thread_t;
 
 
