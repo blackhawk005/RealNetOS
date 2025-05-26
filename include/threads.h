@@ -24,6 +24,12 @@ typedef struct {
     unsigned long sp;   // Stack pointer
 } context_t;
 
+typedef enum {
+    THREAD_RUNNABLE,
+    THREAD_SLEEPING,
+    THREAD_BLOCKED
+} thread_state_t;
+
 typedef struct {
     context_t ctx;
     unsigned char stack[STACK_SIZE];
@@ -31,8 +37,15 @@ typedef struct {
     int priority;               // Lower number = higher priority
     unsigned long deadline;     // Lower = higher urgency (Timestamp)
     unsigned long period;       // For periodic deadline update
+    thread_state_t state;
+    unsigned long sleep_until;
 } thread_t;
 
+void yield();
+void sleep(unsigned long ticks);
+void wake(int thread_id);
+// void wait();
+void notify(int thread_id);
 
 void init_threads();
 void schedule();

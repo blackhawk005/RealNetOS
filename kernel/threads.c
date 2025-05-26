@@ -10,16 +10,18 @@ extern void switch_context(context_t* old, context_t* new);
 
 // Dummy user functions
 void thread_fn1(){
-    while (1){
-        uart_puts("[Thread 1]\n");
-        for (volatile int i = 0; i < 1000000; ++i);
-    }
+    while (1) {
+    uart_puts("[Thread 1] waiting...\n");
+    wait();  // Block here until notified
+    uart_puts("[Thread 1] resumed!\n");
+}
 }
 
 void thread_fn2(){
-    while (1){
-        uart_puts("[Thread 2]\n");
-        for (volatile int i = 0; i < 1000000; ++i);
+    while (1) {
+        uart_puts("[Thread 2] notifying...\n");
+        notify(0);  // Wake thread 0
+        sleep(5);   // Sleep before next notify
     }
 }
 
@@ -53,6 +55,13 @@ void update_deadlines(){
 void schedule(){
     update_deadlines();
 
+    // Wake sleeping threads whose time has come
+    for (int i = 0; i < MAX_THREADS; i++){
+        if (threads[i].state = THREAD_SLEEPING && system_ticks >= threads[i].sleep_until){
+            threads[i].state = THREAD_RUNNABLE;
+        }
+    }
+
     int prev = current;
 
     // Scan priority levels from high to low
@@ -64,7 +73,9 @@ void schedule(){
         for (int i = 1; i <= MAX_THREADS; i++){
             int idx = (last_scheduled[prio] + i) % MAX_THREADS;     // Round-Robin Effect
 
-            if (threads[idx].active && threads[idx].priority == prio){
+            if (threads[idx].active && 
+                threads[idx].priority == prio &&
+                threads[idx].state == THREAD_RUNNABLE){
                 // Picks thread with earliest deadline at this priority
                 if (threads[idx].deadline < best_deadline){
                     best_deadline = threads[idx].deadline;
@@ -73,6 +84,7 @@ void schedule(){
             }
         }
 
+        // If new thread is selected
         if (selected != -1){
             last_scheduled[prio] = selected;
             current = selected;
@@ -81,3 +93,33 @@ void schedule(){
         }
     }
 }
+
+void yield(){
+    schedule();
+}
+
+void sleep(unsigned long ticks){
+    threads[current].sleep_until = system_ticks + ticks;
+    threads[current].state = THREAD_SLEEPING;
+    schedule();
+}
+
+// Block the current thread
+void wait(){
+    threads[current].state = THREAD_BLOCKED;
+    schedule();
+}
+
+void notify(int thread_id){
+    if (thread_id >= 0 && thread_id < MAX_THREADS && threads[thread_id].active){
+        if (threads[thread_id].state == THREAD_BLOCKED){
+            threads[thread_id].state = THREAD_RUNNABLE;
+        }
+    }
+}
+
+// void wake(int thread_id){
+//     if (thread_id >= 0 && thread_id < MAX_THREADS && threads[thread_id].active){
+//         threads[thread_id].state = THREAD_RUNNABLE;
+//     }
+// }
