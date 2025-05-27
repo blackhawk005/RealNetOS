@@ -1,6 +1,7 @@
 #include "../include/syscall.h"
 #include "../include/threads.h"
 #include "../include/ipc.h"
+#include "../include/uart.h"
 
 extern thread_t threads[MAX_THREADS];
 extern int current;
@@ -27,6 +28,10 @@ int syscall_dispatcher(syscall_id_t id, unsigned long arg0, unsigned long arg1){
             return 0;
         case SYSCALL_RETURN:
             return sys_return_from_signal();
+        case SYSCALL_WRITE:
+            return sys_write((int)arg0, (const char*)arg1);
+        case SYSCALL_READ:
+            return sys_read((int)arg0, (char*)arg1);
         default:
             return -1;
     }
@@ -51,4 +56,22 @@ int sys_receive(void* out_msg){
 int sys_return_from_signal(){
     threads[current].user_entry = (void*)threads[current].saved_pc;
     return 0;
+}
+
+int sys_write(int fd, const char* buf){
+    if (fd == 1){
+        uart_puts(buf);
+        return 0;
+    }
+
+    return -1;
+}
+
+int sys_read(int fd, char* buf){
+    if (fd == 0){
+        char c = uart_getc();
+        *buf = c;
+        return 1;
+    }
+    return -1;
 }

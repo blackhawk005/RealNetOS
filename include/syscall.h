@@ -14,7 +14,9 @@ typedef enum {
     SYSCALL_RECEIVE,
     SYSCALL_SIGNAL,
     SYSCALL_KILL,
-    SYSCALL_RETURN
+    SYSCALL_RETURN,
+    SYSCALL_READ,
+    SYSCALL_WRITE
 } syscall_id_t;
 
 int syscall_dispatcher(syscall_id_t id, unsigned long arg0, unsigned long arg1);
@@ -28,5 +30,8 @@ int sys_receive(void* out_msg);
 int sys_signal(int sig, signalhandler_t handler);
 int sys_kill(int pid, int sig);
 int sys_return_from_signal(void);
+
+int sys_write(int fd, const char* buf);
+int sys_read(int fd, char* buf);
 
 #endif

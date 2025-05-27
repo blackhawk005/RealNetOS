@@ -25,3 +25,8 @@ void uart_putc(char c) {
 void uart_puts(const char* s) {
     while (*s) uart_putc(*s++);
 }
+
+char uart_getc(void){
+    while (UART0_FR & (1 << 4)){}   // WAIT while RX FIFO empty
+    return UART0_DR & 0xFF;
+}
