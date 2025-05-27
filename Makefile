@@ -7,12 +7,15 @@ SRC = \
   kernel/context_switch.S \
   kernel/threads.c \
   kernel/scheduler.c \
-  kernel/kernel.c \
+  kernel/uart.c \
   kernel/irq.c \
   kernel/timer.c \
   kernel/mem.c \
   kernel/page.c \
-  kernel/syscall.c
+  kernel/syscall.c \
+  kernel/user.S \
+  kernel/main.c \
+  kernel/syscall_entry.c
   
 OBJ = $(SRC:.c=.o)
 OBJ := $(OBJ:.S=.o)
