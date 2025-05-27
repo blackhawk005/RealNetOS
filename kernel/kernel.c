@@ -10,3 +10,8 @@ void uart_putc(char c) {
 void uart_puts(const char* s) {
     while (*s) uart_putc(*s++);
 }
+
+void kernel_main(void) {
+    uart_puts("HELLO FROM PI 4\n");
+    while (1);
+}

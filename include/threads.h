@@ -1,3 +1,5 @@
+#include "ipc.h"
+
 #ifndef THREADS_H
 #define THREADS_H
 
@@ -39,12 +41,13 @@ typedef struct {
     unsigned long period;       // For periodic deadline update
     thread_state_t state;
     unsigned long sleep_until;
+    mailbox_t mailbox;
 } thread_t;
 
 void yield();
 void sleep(unsigned long ticks);
-void wake(int thread_id);
-// void wait();
+// void wake(int thread_id);
+void wait();
 void notify(int thread_id);
 
 void init_threads();

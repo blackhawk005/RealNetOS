@@ -1,4 +1,4 @@
-CROSS = aarch64-elf
+CROSS = aarch64-none-elf
 CFLAGS = -ffreestanding -O0 -nostdlib -nostartfiles -Wall -mcpu=cortex-a72 -march=armv8-a -mabi=lp64
 
 SRC = \
@@ -7,7 +7,7 @@ SRC = \
   kernel/context_switch.S \
   kernel/threads.c \
   kernel/scheduler.c \
-  kernel/uart.c \
+  kernel/kernel.c \
   kernel/irq.c \
   kernel/timer.c \
   kernel/mem.c \
