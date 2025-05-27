@@ -1,4 +1,5 @@
 #include "ipc.h"
+#include "signal.h"
 
 #ifndef THREADS_H
 #define THREADS_H
@@ -9,6 +10,8 @@
 
 extern int last_scheduled[MAX_PRIORITY_LEVELS];
 extern unsigned long system_ticks;
+extern void user1_entry(void);
+extern void user2_entry(void);
 
 typedef struct {
     unsigned long x19;  // Callee-saved
@@ -42,6 +45,11 @@ typedef struct {
     thread_state_t state;
     unsigned long sleep_until;
     mailbox_t mailbox;
+    unsigned char* user_stack;
+    void (*user_entry)(void);
+    unsigned int pending_signal;
+    signalhandler_t signal_handlers[MAX_SIGNALS];
+    unsigned long saved_pc;
 } thread_t;
 
 void yield();

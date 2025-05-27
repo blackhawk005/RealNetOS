@@ -29,10 +29,14 @@ void thread_fn2() {
     }
 }
 
+unsigned char user_stack1[4096] __attribute__((aligned(16)));
+unsigned char user_stack2[4096] __attribute__((aligned(16)));
+
 void init_threads(){
     // Thread 1
-    threads[0].ctx.sp = (unsigned long)(threads[0].stack + STACK_SIZE);
-    threads[0].ctx.lr = (unsigned long)thread_fn1;
+    // threads[0].ctx.sp = (unsigned long)(threads[0].stack + STACK_SIZE);
+    // threads[0].ctx.lr = (unsigned long)thread_fn1;
+    // Above not needed since eret transitions directly into EL0
     threads[0].active = 1;
     threads[0].priority = 1;
     threads[0].period = 5;
@@ -40,11 +44,14 @@ void init_threads(){
     threads[0].mailbox.head = 0;
     threads[0].mailbox.tail = 0;
     threads[0].mailbox.count = 0;
+    threads[0].user_entry = user1_entry;
+    threads[0].user_stack = user_stack1;
 
 
     // Thread 2
-    threads[1].ctx.sp = (unsigned long)(threads[1].stack + STACK_SIZE);
-    threads[1].ctx.lr = (unsigned long)thread_fn2;
+    // threads[1].ctx.sp = (unsigned long)(threads[1].stack + STACK_SIZE);
+    // threads[1].ctx.lr = (unsigned long)thread_fn2;
+    // Above not needed since eret transitions directly into EL0
     threads[1].active = 1;
     threads[1].priority = 0;    // Higher Priority
     threads[1].period = 3;
@@ -52,6 +59,8 @@ void init_threads(){
     threads[1].mailbox.head = 0;
     threads[1].mailbox.tail = 0;
     threads[1].mailbox.count = 0;
+    threads[1].user_entry = user2_entry;
+    threads[1].user_stack = user_stack1;
 }
 
 // Ensures expired threads are re-scheduled

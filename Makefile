@@ -13,7 +13,8 @@ SRC = \
   kernel/mem.c \
   kernel/page.c \
   kernel/syscall.c \
-  kernel/user.S \
+  kernel/user1.S \
+  kernel/user2.S \
   kernel/main.c \
   kernel/syscall_entry.c
   
