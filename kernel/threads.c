@@ -1,6 +1,7 @@
 #include "../include/uart.h"
 #include "../include/threads.h"
 #include "../include/ipc.h"
+#include "../include/syscall.h"
 
 thread_t threads[MAX_THREADS];
 int current = 0;
@@ -12,15 +13,15 @@ extern void switch_context(context_t* old, context_t* new);
 // Dummy user functions
 void thread_fn1() {
     while (1) {
-        send(1, "Hello from T1");
-        sleep(5);
+        sys_send(1, "Hello from T1");
+        sys_sleep(5);
     }
 }
 
 void thread_fn2() {
     message_t msg;
     while (1) {
-        if (receive(&msg) == 0) {
+        if (sys_receive(&msg) == 0) {
             uart_puts("T2 received: ");
             uart_puts(msg.data);
             uart_puts("\n");

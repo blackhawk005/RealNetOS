@@ -11,7 +11,8 @@ SRC = \
   kernel/irq.c \
   kernel/timer.c \
   kernel/mem.c \
-  kernel/page.c
+  kernel/page.c \
+  kernel/syscall.c
   
 OBJ = $(SRC:.c=.o)
 OBJ := $(OBJ:.S=.o)
