@@ -4,6 +4,7 @@
 #include "../include/net/udp.h"
 #include "../include/net/net_utils.h"
 #include "../include/net/ethernet.h"
+#include "../include/net/tcp.h"
 #include <stddef.h>
 
 static uint32_t local_ip = 0xC0A80002;      // 192.168.0.2
@@ -48,10 +49,14 @@ void ip_recv(const char* packet, int len){
         return;
     }
 
+    const char* payload = packet + ihl;
+    int payload_len = ntohs(hdr->total_len) - ihl;
+
     if (hdr->protocol == IP_PROTO_UDP){
-        const char* udp_payload = packet + ihl;
-        int udp_len = ntohs(hdr->total_len) - ihl;
-        udp_recv(udp_payload, udp_len, ntohs(hdr->src_ip));
+        udp_recv(payload, payload_len, ntohl(hdr->src_ip));
+    }
+    else if (hdr->protocol == 6) { // TCP
+        tcp_recv(payload, payload_len, ntohl(hdr->src_ip));
     }
 }
 

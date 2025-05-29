@@ -21,7 +21,8 @@ SRC = \
   src/lib.c \
   net/ip.c \
   net/udp.c \
-  net/ethernet.c
+  net/ethernet.c \
+  net/tcp.c
   
 OBJ = $(SRC:.c=.o)
 OBJ := $(OBJ:.S=.o)
