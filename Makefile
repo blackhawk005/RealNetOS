@@ -16,7 +16,9 @@ SRC = \
   kernel/user1.S \
   kernel/user2.S \
   kernel/main.c \
-  kernel/syscall_entry.c
+  kernel/syscall_entry.c \
+  kernel/genet.c \
+  src/lib.c
   
 OBJ = $(SRC:.c=.o)
 OBJ := $(OBJ:.S=.o)

@@ -1,5 +1,6 @@
 #include "../include/uart.h"
 #include "../include/threads.h"
+#include "../include/genet.h"
 
 extern void exception_vector(void);
 extern void user_entry(void);
@@ -14,6 +15,9 @@ void delay(void) { for (volatile int i = 0; i < 100000000; i++); }
 void kernel_main(void) {
     uart_init();
     uart_puts("RealNetOS Booting...\n");
+
+    uart_puts("Network Stack Starting...\n");
+    genet_init();
 
     // Set vector base for exception handling (SVC, IRQ, etc.)
     asm volatile("msr VBAR_EL1, %0" :: "r"(exception_vector));
