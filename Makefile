@@ -18,7 +18,10 @@ SRC = \
   kernel/main.c \
   kernel/syscall_entry.c \
   kernel/genet.c \
-  src/lib.c
+  src/lib.c \
+  net/ip.c \
+  net/udp.c \
+  net/ethernet.c
   
 OBJ = $(SRC:.c=.o)
 OBJ := $(OBJ:.S=.o)
