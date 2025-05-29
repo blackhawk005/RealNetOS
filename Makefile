@@ -22,7 +22,9 @@ SRC = \
   net/ip.c \
   net/udp.c \
   net/ethernet.c \
-  net/tcp.c
+  net/tcp.c \
+  net/rx_tx_threads.c \
+  net/packet_queue.c
   
 OBJ = $(SRC:.c=.o)
 OBJ := $(OBJ:.S=.o)

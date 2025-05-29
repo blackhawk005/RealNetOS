@@ -4,7 +4,7 @@
 #ifndef THREADS_H
 #define THREADS_H
 
-#define MAX_THREADS 2
+#define MAX_THREADS 4
 #define MAX_PRIORITY_LEVELS 4 // Eg 0 (highest) to 3 (lowest)
 #define STACK_SIZE 4096
 

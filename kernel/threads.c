@@ -2,6 +2,7 @@
 #include "../include/threads.h"
 #include "../include/ipc.h"
 #include "../include/syscall.h"
+#include <stddef.h>
 
 thread_t threads[MAX_THREADS];
 int current = 0;
@@ -9,6 +10,11 @@ unsigned long system_ticks = 0;
 int last_scheduled[MAX_PRIORITY_LEVELS] = {-1, -1, -1, -1};
 
 extern void switch_context(context_t* old, context_t* new);
+extern void rx_thread(void*);
+extern void tx_thread(void*);
+
+unsigned char rx_stack[STACK_SIZE] __attribute__((aligned(16)));
+unsigned char tx_stack[STACK_SIZE] __attribute__((aligned(16)));
 
 // Dummy user functions
 void thread_fn1() {
@@ -61,6 +67,24 @@ void init_threads(){
     threads[1].mailbox.count = 0;
     threads[1].user_entry = user2_entry;
     threads[1].user_stack = user_stack1;
+
+    // Thread 3 - RX Thread
+    threads[2].active = 1;
+    threads[2].priority = 2;
+    threads[2].period = 10;
+    threads[2].deadline = system_ticks + threads[2].period;
+    threads[2].mailbox.head = threads[2].mailbox.tail = threads[2].mailbox.count = 0;
+    threads[2].user_entry = (void (*)(void))rx_thread;
+    threads[2].user_stack = NULL;
+
+    // Thread 4 - TX Thread
+    threads[3].active = 1;
+    threads[3].priority = 3;
+    threads[3].period = 10;
+    threads[3].deadline = system_ticks + threads[3].period;
+    threads[3].mailbox.head = threads[3].mailbox.tail = threads[3].mailbox.count = 0;
+    threads[3].user_entry = (void (*)(void))tx_thread;
+    threads[3].user_stack = NULL;
 }
 
 // Ensures expired threads are re-scheduled
