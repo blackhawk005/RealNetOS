@@ -2,6 +2,7 @@
 #include "../include/threads.h"
 #include "../include/ipc.h"
 #include "../include/uart.h"
+#include "../include/net/tcp.h"
 
 extern thread_t threads[MAX_THREADS];
 extern int current;
@@ -32,6 +33,12 @@ int syscall_dispatcher(syscall_id_t id, unsigned long arg0, unsigned long arg1){
             return sys_write((int)arg0, (const char*)arg1);
         case SYSCALL_READ:
             return sys_read((int)arg0, (char*)arg1);
+        case SYSCALL_TCP_CONNECT:
+            return tcp_connect((uint32_t)arg0, (uint16_t)arg1);
+        case SYSCALL_TCP_SEND:
+            return tcp_send((const char*)arg0, (int)arg1);
+        case SYSCALL_TCP_RECEIVE:
+            return tcp_receive((char*)arg0, (int*)arg1);
         default:
             return -1;
     }
@@ -74,4 +81,16 @@ int sys_read(int fd, char* buf){
         return 1;
     }
     return -1;
+}
+
+int sys_tcp_connect(uint32_t dest_ip, uint16_t dest_port) {
+    return syscall_dispatcher(SYSCALL_TCP_CONNECT, dest_ip, dest_port);
+}
+
+int sys_tcp_send(const char* data, int len) {
+    return syscall_dispatcher(SYSCALL_TCP_SEND, (unsigned long)data, len);
+}
+
+int sys_tcp_receive(char* buf, int max_len) {
+    return syscall_dispatcher(SYSCALL_TCP_RECEIVE, (unsigned long)buf, max_len);
 }

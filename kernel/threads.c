@@ -12,6 +12,7 @@ int last_scheduled[MAX_PRIORITY_LEVELS] = {-1, -1, -1, -1};
 extern void switch_context(context_t* old, context_t* new);
 extern void rx_thread(void*);
 extern void tx_thread(void*);
+extern void user3_entry(void);
 
 unsigned char rx_stack[STACK_SIZE] __attribute__((aligned(16)));
 unsigned char tx_stack[STACK_SIZE] __attribute__((aligned(16)));
@@ -37,6 +38,7 @@ void thread_fn2() {
 
 unsigned char user_stack1[4096] __attribute__((aligned(16)));
 unsigned char user_stack2[4096] __attribute__((aligned(16)));
+unsigned char user_stack3[4096] __attribute__((aligned(16)));
 
 void init_threads(){
     // Thread 1
@@ -74,8 +76,8 @@ void init_threads(){
     threads[2].period = 10;
     threads[2].deadline = system_ticks + threads[2].period;
     threads[2].mailbox.head = threads[2].mailbox.tail = threads[2].mailbox.count = 0;
-    threads[2].user_entry = (void (*)(void))rx_thread;
-    threads[2].user_stack = NULL;
+    threads[2].user_entry = user3_entry;
+    threads[2].user_stack = user_stack3;
 
     // Thread 4 - TX Thread
     threads[3].active = 1;

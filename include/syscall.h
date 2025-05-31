@@ -1,4 +1,5 @@
 #include "signal.h"
+#include <stdint.h>
 
 #ifndef SYSCALL_H
 #define SYSCALL_H
@@ -16,7 +17,10 @@ typedef enum {
     SYSCALL_KILL,
     SYSCALL_RETURN,
     SYSCALL_READ,
-    SYSCALL_WRITE
+    SYSCALL_WRITE,
+    SYSCALL_TCP_CONNECT,
+    SYSCALL_TCP_SEND,
+    SYSCALL_TCP_RECEIVE
 } syscall_id_t;
 
 int syscall_dispatcher(syscall_id_t id, unsigned long arg0, unsigned long arg1);
@@ -33,5 +37,9 @@ int sys_return_from_signal(void);
 
 int sys_write(int fd, const char* buf);
 int sys_read(int fd, char* buf);
+
+int sys_tcp_connect(uint32_t dest_ip, uint16_t dest_port);
+int sys_tcp_send(const char* data, int len);
+int sys_tcp_receive(char* buf, int max_len);
 
 #endif

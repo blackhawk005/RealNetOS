@@ -24,7 +24,8 @@ SRC = \
   net/ethernet.c \
   net/tcp.c \
   net/rx_tx_threads.c \
-  net/packet_queue.c
+  net/packet_queue.c \
+  kernel/user3_entry.c
   
 OBJ = $(SRC:.c=.o)
 OBJ := $(OBJ:.S=.o)
