@@ -1,3 +1,5 @@
+.extern start_sensor_polling_task
+
 .section .text
 .global user1_entry, user_signal_handler
 .type user1_entry, %function
@@ -20,6 +22,8 @@ user1_entry:
     mov x0, #3
     mov x8, #0              // SYSCALL_SLEEP
     svc #0
+
+    b start_sensor_polling_task
 
     b .                     // loop forever
 

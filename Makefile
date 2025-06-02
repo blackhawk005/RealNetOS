@@ -25,7 +25,8 @@ SRC = \
   net/tcp.c \
   net/rx_tx_threads.c \
   net/packet_queue.c \
-  kernel/user3_entry.c
+  kernel/user3_entry.c \
+  user/sensor_task.c
   
 OBJ = $(SRC:.c=.o)
 OBJ := $(OBJ:.S=.o)
