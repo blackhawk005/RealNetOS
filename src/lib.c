@@ -123,15 +123,10 @@ char* strchr(const char* str, int c) {
     return NULL;
 }
 
-// #define KMALLOC_POOL_SIZE 4096
-// static char kmalloc_pool[KMALLOC_POOL_SIZE];
-// static size_t kmalloc_offset = 0;
-
-// void* kmalloc(size_t size) {
-//     if (kmalloc_offset + size > KMALLOC_POOL_SIZE)
-//         return NULL;  // out of memory
-
-//     void* ptr = &kmalloc_pool[kmalloc_offset];
-//     kmalloc_offset += size;
-//     return ptr;
-// }
+void* memset(void* s, int c, size_t n) {
+    unsigned char* p = s;
+    while (n--) {
+        *p++ = (unsigned char)c;
+    }
+    return s;
+}

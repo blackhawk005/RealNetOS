@@ -1,3 +1,5 @@
+#include "../include/lib.h"
+
 #define UART0_BASE 0xFE201000
 #define UART0_DR   (*(volatile unsigned int *)(UART0_BASE + 0x00))
 #define UART0_FR   (*(volatile unsigned int *)(UART0_BASE + 0x18))
@@ -29,4 +31,10 @@ void uart_puts(const char* s) {
 char uart_getc(void){
     while (UART0_FR & (1 << 4)){}   // WAIT while RX FIFO empty
     return UART0_DR & 0xFF;
+}
+
+void uart_puti(int num) {
+    char buf[16];
+    int_to_str(num, buf);
+    uart_puts(buf);
 }

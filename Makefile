@@ -29,7 +29,10 @@ SRC = \
   user/sensor_task.c \
   user/shell.c \
   net/dma.c \
-  fs/vfs.c
+  fs/vfs.c \
+  fs/dummyfs.c \
+  fs/fat32.c \
+  block/sd.c
   
 OBJ = $(SRC:.c=.o)
 OBJ := $(OBJ:.S=.o)

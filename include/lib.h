@@ -11,3 +11,4 @@ char* strcat(char* dest, const char* src);
 char* strtok(char* str, const char* delim);
 char* strchr(const char* str, int c);
 void* kmalloc(size_t size);
+void* memset(void* s, int c, size_t n);

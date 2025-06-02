@@ -1,7 +1,11 @@
 #include "../include/uart.h"
 #include "../include/threads.h"
 #include "../include/genet.h"
+#include "../include/fs/vfs.h"
+#include "../include/fs/dummyfs.h"
+#include "../include/fs/fat32.h"
 #include <stddef.h>
+
 
 extern void exception_vector(void);
 extern thread_t threads[MAX_THREADS];
@@ -10,6 +14,17 @@ extern int current;
 void kernel_main(void) {
     uart_init();
     uart_puts("RealNetOS Booting...\n");
+
+    register_filesystem(&dummy_fs);
+    register_filesystem(&fat32_fs);
+
+    file_t* test_file;
+    if (vfs_open("/test", &test_file) == 0) {
+        uart_puts("VFS open succeeded\n");
+    } else {
+        uart_puts("VFS open failed\n");
+    }
+
 
     uart_puts("Network Stack Starting...\n");
     genet_init();
