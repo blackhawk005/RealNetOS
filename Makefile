@@ -27,7 +27,8 @@ SRC = \
   net/packet_queue.c \
   kernel/user3_entry.c \
   user/sensor_task.c \
-  user/shell.c
+  user/shell.c \
+  net/dma.c \
   
 OBJ = $(SRC:.c=.o)
 OBJ := $(OBJ:.S=.o)

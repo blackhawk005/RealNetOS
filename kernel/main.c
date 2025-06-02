@@ -14,6 +14,8 @@ void kernel_main(void) {
     uart_puts("Network Stack Starting...\n");
     genet_init();
 
+    
+
     // Set vector base for exception handling (SVC, IRQ, etc.)
     asm volatile("msr VBAR_EL1, %0" :: "r"(exception_vector));
 
@@ -23,8 +25,10 @@ void kernel_main(void) {
     uart_puts("Scheduler starting...\n");
 
     while (1) {
+        // 1. Run the scheduler to pick next thread
         schedule();
 
+        // 2. Get the current thread
         thread_t* t = &threads[current];
 
         // ===== Signal Check =====

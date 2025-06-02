@@ -1,6 +1,7 @@
 #include "../include/genet.h"
 #include "../include/uart.h"
 #include "../include/lib.h"
+#include "../include/net/ethernet.h"
 
 dma_desc_t rx_ring[GENET_DMA_DESC_COUNT] __attribute__((aligned(16)));
 char rx_buffers[GENET_DMA_DESC_COUNT][ETH_FRAME_SIZE] __attribute__((aligned(16)));
@@ -85,12 +86,8 @@ void genet_handle_rx(void){
     char buf[ETH_FRAME_SIZE];
     int len;
 
-    while ((len = genet_recv(buf)) > 0){
-        uart_puts("Received Packet: ");
-        for (int i = 0; i < len; i++){
-            uart_putc(buf[i]);
-        }
-        uart_puts("\n");
+    while ((len = genet_recv(buf)) > 0) {
+        ethernet_handle(buf, len);
     }
 }
 
