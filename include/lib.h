@@ -8,3 +8,6 @@ int strcmp(const char* s1, const char* s2);
 void int_to_buf(unsigned long value, char* str);
 char* strcpy(char* dest, const char* src);
 char* strcat(char* dest, const char* src);
+char* strtok(char* str, const char* delim);
+char* strchr(const char* str, int c);
+void* kmalloc(size_t size);

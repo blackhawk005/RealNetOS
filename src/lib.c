@@ -1,5 +1,7 @@
 #include <stddef.h>
 
+char* strchr(const char* str, int c);
+
 void* memcpy(void* dest, const void* src, size_t n){
     char* d = (char*)dest;
     const char* s = (const char*) src;
@@ -88,3 +90,48 @@ char* strcat(char* dest, const char* src){
     while ((*dest++ = *src++));
     return r;
 }
+
+// Minimal strtok() implementation (non-thread-safe)
+char* strtok(char* str, const char* delim) {
+    static char* next;
+    if (str) next = str;
+    if (!next) return NULL;
+
+    // Skip leading delimiters
+    while (*next && strchr(delim, *next)) next++;
+    if (!*next) return NULL;
+
+    char* start = next;
+    while (*next && !strchr(delim, *next)) next++;
+
+    if (*next) {
+        *next = '\0';
+        next++;
+    } else {
+        next = NULL;
+    }
+
+    return start;
+}
+
+char* strchr(const char* str, int c) {
+    while (*str) {
+        if (*str == (char)c)
+            return (char*)str;
+        str++;
+    }
+    return NULL;
+}
+
+// #define KMALLOC_POOL_SIZE 4096
+// static char kmalloc_pool[KMALLOC_POOL_SIZE];
+// static size_t kmalloc_offset = 0;
+
+// void* kmalloc(size_t size) {
+//     if (kmalloc_offset + size > KMALLOC_POOL_SIZE)
+//         return NULL;  // out of memory
+
+//     void* ptr = &kmalloc_pool[kmalloc_offset];
+//     kmalloc_offset += size;
+//     return ptr;
+// }

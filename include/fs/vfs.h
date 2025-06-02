@@ -10,6 +10,7 @@ struct  vnode
 {
     struct filesystem* fs;
     struct file_ops* fops;
+    struct vnode_ops* vops;
     void* internal;
 };
 
@@ -17,7 +18,7 @@ struct file {
     vnode_t* vnode;
     size_t f_pos;
     struct file_ops* fops;
-    void* interna;
+    void* internal;
 };
 
 struct file_ops {
@@ -26,9 +27,25 @@ struct file_ops {
     int (*close)(file_t*);
 };
 
+struct vnode_ops {
+    int (*lookup)(struct vnode* dir_node, const char* name, struct vnode** target);
+    int (*create)(struct vnode* dir_node, const char* name, struct vnode** target);
+};
+
 struct filesystem {
     const char* name;
     int (*setup_mount)(struct filesystem* fs, vnode_t* root);
+};
+
+struct mount {
+    struct filesystem* fs;
+    vnode_t* root;
+};
+
+struct dentry {
+    const char* name;
+    vnode_t* vnode;
+    struct dentry* next; // linked list of siblings
 };
 
 int register_filesystem(struct filesystem* fs);
