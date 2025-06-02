@@ -1,12 +1,11 @@
+.extern shell_entry
+
 .section .text
 .global user2_entry
 .type user2_entry, %function
 
 user2_entry:
-    mov x0, #0      // pid of user 1
-    mov x1, #1      // signal ID = SIG_USER
-    mov x8, #3      // syscall ID = SYSCALL_KILL
-    svc #0
+    bl shell_entry
 
     b .             // Loop forever after sending
 

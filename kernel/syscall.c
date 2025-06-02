@@ -39,6 +39,8 @@ int syscall_dispatcher(syscall_id_t id, unsigned long arg0, unsigned long arg1){
             return tcp_send((const char*)arg0, (int)arg1);
         case SYSCALL_TCP_RECEIVE:
             return tcp_receive((char*)arg0, (int*)arg1);
+        case SYSCALL_TICKS:
+            return system_ticks;
         default:
             return -1;
     }
@@ -93,4 +95,11 @@ int sys_tcp_send(const char* data, int len) {
 
 int sys_tcp_receive(char* buf, int max_len) {
     return syscall_dispatcher(SYSCALL_TCP_RECEIVE, (unsigned long)buf, max_len);
+}
+
+unsigned long sys_ticks(){
+    register unsigned long ret __asm__("x0");
+    register unsigned long syscall_id __asm__("x8") = SYSCALL_TICKS;
+    __asm__ volatile ("svc #0" : "=r"(ret) : "r"(syscall_id) : "memory");
+    return ret;
 }
