@@ -2,6 +2,7 @@
 #include "../include/threads.h"
 #include "../include/ipc.h"
 #include "../include/syscall.h"
+#include "../include/lib.h"
 #include <stddef.h>
 
 thread_t threads[MAX_THREADS];
@@ -13,6 +14,8 @@ extern void switch_context(context_t* old, context_t* new);
 extern void rx_thread(void*);
 extern void tx_thread(void*);
 extern void user3_entry(void);
+extern void kernel_shell_entry(void);
+extern void el0_test_entry(void);
 
 unsigned char rx_stack[STACK_SIZE] __attribute__((aligned(16)));
 unsigned char tx_stack[STACK_SIZE] __attribute__((aligned(16)));
@@ -45,8 +48,9 @@ void init_threads(){
     // threads[0].ctx.sp = (unsigned long)(threads[0].stack + STACK_SIZE);
     // threads[0].ctx.lr = (unsigned long)thread_fn1;
     // Above not needed since eret transitions directly into EL0
-    threads[0].active = 1;
-    threads[0].priority = 1;
+    threads[0].active = 0;
+    memset(&threads[0].user_ctx, 0, sizeof(threads[0].user_ctx));
+    threads[0].priority = 2;
     threads[0].period = 5;
     threads[0].deadline = system_ticks + threads[0].period;
     threads[0].mailbox.head = 0;
@@ -54,39 +58,54 @@ void init_threads(){
     threads[0].mailbox.count = 0;
     threads[0].user_entry = user1_entry;
     threads[0].user_stack = user_stack1;
+    threads[0].state = THREAD_RUNNABLE;
+    threads[0].user_ctx.elr_el1 = 0;
+    threads[0].user_ctx.sp_el0 = 0;
+    threads[0].user_ctx.x0_ret = 0;
 
 
     // Thread 2
     // threads[1].ctx.sp = (unsigned long)(threads[1].stack + STACK_SIZE);
     // threads[1].ctx.lr = (unsigned long)thread_fn2;
     // Above not needed since eret transitions directly into EL0
-    threads[1].active = 1;
-    threads[1].priority = 0;    // Higher Priority
+    threads[1].active = 0;
+    memset(&threads[1].user_ctx, 0, sizeof(threads[1].user_ctx));
+    threads[1].priority = 1;    // Shell above user1
     threads[1].period = 3;
     threads[1].deadline = system_ticks + threads[1].period;    // Will be scheduled first
     threads[1].mailbox.head = 0;
     threads[1].mailbox.tail = 0;
     threads[1].mailbox.count = 0;
     threads[1].user_entry = user2_entry;
-    threads[1].user_stack = user_stack1;
+    threads[1].user_stack = user_stack2;
+    threads[1].state = THREAD_RUNNABLE;
+    threads[1].user_ctx.elr_el1 = 0;
+    threads[1].user_ctx.sp_el0 = 0;
+    threads[1].user_ctx.x0_ret = 0;
 
-    // Thread 3 - RX Thread
-    threads[2].active = 1;
-    threads[2].priority = 2;
+    // Thread 3 - RT demo (disabled for now; crashes before shell runs)
+    threads[2].active = 0;
+    memset(&threads[2].user_ctx, 0, sizeof(threads[2].user_ctx));
+    threads[2].priority = 0;    // RT demo highest
     threads[2].period = 10;
     threads[2].deadline = system_ticks + threads[2].period;
     threads[2].mailbox.head = threads[2].mailbox.tail = threads[2].mailbox.count = 0;
     threads[2].user_entry = user3_entry;
     threads[2].user_stack = user_stack3;
+    threads[2].state = THREAD_RUNNABLE;
+    threads[2].user_ctx.elr_el1 = 0;
+    threads[2].user_ctx.sp_el0 = 0;
+    threads[2].user_ctx.x0_ret = 0;
 
     // Thread 4 - TX Thread
     threads[3].active = 1;
-    threads[3].priority = 3;
-    threads[3].period = 10;
+    threads[3].priority = 0;
+    threads[3].period = 1;
     threads[3].deadline = system_ticks + threads[3].period;
     threads[3].mailbox.head = threads[3].mailbox.tail = threads[3].mailbox.count = 0;
-    threads[3].user_entry = (void (*)(void))tx_thread;
+    threads[3].user_entry = kernel_shell_entry;
     threads[3].user_stack = NULL;
+    threads[3].state = THREAD_RUNNABLE;
 }
 
 // Ensures expired threads are re-scheduled
@@ -134,26 +153,30 @@ void schedule(){
         if (selected != -1){
             last_scheduled[prio] = selected;
             current = selected;
-            switch_context(&threads[prev].ctx, &threads[current].ctx);
+            if (prev != current &&
+                threads[prev].ctx.sp != 0 &&
+                threads[current].ctx.sp != 0) {
+                switch_context(&threads[prev].ctx, &threads[current].ctx);
+            }
             return;
         }
     }
 }
 
 void yield(){
-    schedule();
+    // Let the syscall return path handle scheduling
 }
 
 void sleep(unsigned long ticks){
     threads[current].sleep_until = system_ticks + ticks;
     threads[current].state = THREAD_SLEEPING;
-    schedule();
+    // Let the syscall return path handle scheduling
 }
 
 // Block the current thread
 void wait(){
     threads[current].state = THREAD_BLOCKED;
-    schedule();
+    // Let the syscall return path handle scheduling
 }
 
 void notify(int thread_id){

@@ -1,157 +1,191 @@
+# 🛠 RealNetOS — A Real-Time Microkernel for Raspberry Pi 4
 
-# 🛠 RealNetOS – A Microkernel-based Real-Time Embedded Operating System
+**RealNetOS** is a from-scratch, bare-metal AArch64 operating system for the Raspberry Pi 4. It boots without Linux, brings up an HDMI framebuffer console and a UART serial shell, and demonstrates real-time scheduling, a custom TCP/IP stack, and a FAT32 filesystem — all in ~5,000 lines of C and assembly.
 
-**RealNetOS** is a custom-built operating system designed from scratch for embedded platforms like the Raspberry Pi 4. It follows a microkernel architecture and includes real-time scheduling, multithreaded networking, user-space services, and a minimal virtual file system with FAT32 support.
+> **Runtime mode:** RealNetOS runs its interactive shell in **kernel mode (EL1)** for stability. EL0 user-mode syscall return is still unstable, so user-mode apps are compiled but not executed in the boot path (see the status tables below).
 
 ---
 
-## 📦 Project Structure
+## ✅ What works today (verified in QEMU `raspi4b`)
+
+| Area | Status | Where |
+|------|--------|-------|
+| AArch64 boot, EL2→EL1 drop, BSS/vector setup | ✅ | [boot/start.S](boot/start.S) |
+| PL011 UART serial console | ✅ | [kernel/uart.c](kernel/uart.c) |
+| HDMI framebuffer console (mailbox, 1024×768, 2× font) | ✅ | [kernel/fb.c](kernel/fb.c) |
+| Colored boot banner + self-running on-screen demo | ✅ | [kernel/main.c](kernel/main.c) |
+| Interactive kernel shell (EL1) | ✅ | [kernel/ksh.c](kernel/ksh.c) |
+| VFS + FAT32 read/write (simulated SD under QEMU) | ✅ | [fs/fat32.c](fs/fat32.c) |
+| Cooperative real-time scheduler + tick accounting | ✅ | [kernel/threads.c](kernel/threads.c) |
+| Ethernet/IP/UDP/TCP + GENET driver (compiles; rpi only) | ⚠️ unverified on HW | [net/](net/), [kernel/genet.c](kernel/genet.c) |
+| SDHCI driver for a real SD card | ⚠️ unverified on HW | [block/sd_rpi.c](block/sd_rpi.c) |
+
+## ❌ Not implemented (be aware before planning a demo)
+
+- **No USB stack** (no DWC2/xHCI host controller driver).
+- **No Bluetooth** — so **no Bluetooth keyboard/mouse**.
+- **No WiFi** (no SDIO + brcmfmac firmware loader + 802.11 + WPA2 supplicant).
+- **No EL0 user-mode execution** — multitasking is cooperative inside the EL1 shell.
+
+Shell **input** therefore comes over the **UART serial line** (a USB-to-serial adapter on a host PC). HDMI shows all output. Adding on-device keyboard input would require a full USB host + HID stack first; Bluetooth/WiFi are each multi-month efforts comparable to porting chunks of BlueZ / brcmfmac / wpa_supplicant. They are intentionally out of scope.
+
+---
+
+## 📦 Project structure
 
 ```
-/
-├── kernel/              # Core kernel logic (threads, scheduler, syscalls)
-├── net/                 # Networking layers (Ethernet, IP, UDP, TCP, DMA)
-├── user/                # User-space programs (TCP echo server, CLI shell)
-├── fs/                  # VFS, FAT32 file system logic
-├── block/               # Simulated SD card block driver
-├── include/             # Shared headers for kernel, drivers, user apps
-└── src/lib.c            # Minimal C library (memcpy, itoa, string utils)
+kernel/   Core: boot glue, threads, scheduler, syscalls, shell, framebuffer
+net/      Networking: Ethernet, IP, UDP, TCP, DMA rings
+fs/       VFS + FAT32
+block/    SD block device — sd_qemu.c (in-RAM fake) / sd_rpi.c (SDHCI)
+boot/     start.S, exception vectors, linker script
+user/     User-mode apps (compiled, not run in default path)
+include/  Shared headers
+src/      Minimal C library (memcpy, itoa, string utils)
 ```
 
 ---
 
-## 🚀 Phased Development Breakdown
+## 🚀 Build & run
 
-### ✅ Phase 1: Boot & Microkernel Core
-- **Objective**: Bring up the board and implement a basic microkernel with interrupt handling.
-- **Key Components**:
-  - Startup code in `start.S`
-  - UART initialization for serial I/O
-  - Syscall mechanism using `svc #0`
-  - Minimal thread management and IPC
-- **Highlights**: Manual context switching, vector table setup, trap handling.
-
----
-
-### ✅ Phase 2: Real-Time Thread Scheduling
-- **Objective**: Enable multitasking with real-time guarantees.
-- **Features Implemented**:
-  - Preemptive Round-Robin + Priority-based scheduling
-  - Sleep and Yield primitives
-  - Deadline-aware task queue
-- **Files**: `scheduler.c`, `threads.c`, `syscall.c`
-
----
-
-### ✅ Phase 3: Signal Handling & User-mode I/O
-- **Objective**: Extend user-mode capabilities.
-- **Implemented**:
-  - Signal registration and dispatch
-  - `sys_signal`, `sys_kill`, and signal handler trampoline
-  - `sys_write` and `sys_read` for UART I/O
-- **Demo**: User1 registers a handler and responds to signals sent by User2.
-
----
-
-### ✅ Phase 4: Networking Stack (Ethernet + IP + UDP + TCP)
-- **Goal**: Full custom-built network stack with protocol layering.
-- **Implemented Protocols**:
-  - `ethernet.c/h`: Framing and MAC layer
-  - `ip.c/h`: Basic IPv4 header handling, checksum, routing
-  - `udp.c/h`: Port demux, simple `send/recv`
-  - `tcp.c/h`: Handshake (SYN/ACK), sequence numbers, send/recv buffers
-- **Testing**: Verified using TCP echo server and UDP message exchange.
-
----
-
-### ✅ Phase 4.4: Multithreaded RX/TX Engine
-- **Objective**: Parallelize RX and TX processing using kernel threads.
-- **Features**:
-  - Dedicated RX and TX threads polling DMA rings
-  - Lockless queues for packet exchange
-  - Interrupt-safe scheduling
-- **Impact**: Ensures packet processing does not block user threads.
-
----
-
-### ✅ Phase 5: User-Space Applications
-
-#### ✅ 5.1 TCP Echo Server
-- **Implements**: A user-mode program listening over TCP and echoing responses.
-- **Syscalls Used**: `sys_tcp_connect`, `sys_tcp_send`, `sys_tcp_receive`
-
-#### ✅ 5.2 Sensor Polling Task
-- **Simulates**: Periodic sensor reads with formatted string output via UART.
-- **Tools**: `itoa`, `sys_write`, `sys_sleep`
-
-#### ✅ 5.3 CLI Shell
-- **Implements**: A user-space command loop (minimal shell).
-- **Commands Supported**: `time`, `echo <msg>`, `help`
-- **Supports**: Token parsing, string handling with `strtok`, `strchr`, `strcmp`
-
----
-
-### ✅ Phase 6: Zero-Copy Networking
-- **Objective**: Improve performance using DMA-backed buffer rings.
-- **Files**: `genet_dma.c/h`, `dma.c/h`
-- **Architecture**:
-  - **DMA RX/TX Rings** aligned in memory
-  - **Buffer Recycling**: On receiving a packet, the buffer is reused or reallocated
-  - **No intermediate copies**: DMA writes directly to aligned ring buffers
-- **Hardware Mapping**: MMIO registers mapped for GENET Ethernet on Raspberry Pi 4
-
----
-
-### ✅ Phase 7: File System Support
-
-#### ✅ 7.1 Virtual File System (VFS)
-- **Implements**: An abstract VFS with:
-  - `vnode`, `file`, `filesystem`, `file_ops` structs
-  - `vfs_open`, `vfs_close`, `vfs_read`, `vfs_write`
-  - Dynamic registration of file systems
-
-#### ✅ 7.2 FAT32 File System on SD (Simulated)
-- **Implements**: FAT32 parsing using `fat32.c` and `sd.c`
-- **Block Device Layer**: Provides `sd_read_block` and `sd_write_block`
-- **VFS Integration**: FAT32 registered as a filesystem and mounted on boot
-- **Read Support**: Root directory listing, file block parsing, cluster reading
-- **Future Work**: FAT write support, journaling FS integration
-
----
-
-## 📌 Build & Run Instructions
+Requires the `aarch64-none-elf` GNU toolchain and `qemu-system-aarch64`.
 
 ```bash
-make clean
+# Build for QEMU (in-RAM fake SD, GENET disabled) — this is the default
 make
-Run on QEMU or Raspberry Pi 4
+
+# Serial-only QEMU run (shell on your terminal; Ctrl-A then X to quit)
+make run-qemu
+
+# QEMU with an emulated HDMI window (shows the framebuffer console)
+make run-graphic
+
+# Build the real-hardware kernel (SDHCI + GENET enabled)
+make PLATFORM=rpi
 ```
+
+On boot you'll see the cyan banner, the FAT32 root listing, eight live real-time
+scheduler ticks, then the `RealNetOS#` prompt. Try `help`, `ls`, `cat TEST`,
+`write notes.txt hello`, `rt`, `ticks`.
 
 ---
 
-## ✅ Milestones
+## 📺 Running on a real Raspberry Pi 4
 
-| Phase | Title                             | Status     |
-|-------|-----------------------------------|------------|
-| 1     | Microkernel Boot                  | ✅ Complete |
-| 2     | Real-Time Scheduling              | ✅ Complete |
-| 3     | User I/O & Signal Handling        | ✅ Complete |
-| 4     | Ethernet + TCP/IP Stack           | ✅ Complete |
-| 4.4   | Multithreaded RX/TX               | ✅ Complete |
-| 5     | User Applications                 | ✅ Complete |
-| 6     | Zero-Copy Networking with DMA     | ✅ Complete |
-| 7     | VFS + FAT32 File System           | ✅ Complete |
+### 1. Stage the SD-card files
+
+```bash
+make sdcard
+```
+
+This builds the `PLATFORM=rpi` kernel and creates `dist/` containing
+`kernel8.img` and `config.txt`.
+
+### 2. Add the Raspberry Pi firmware
+
+The Pi's GPU bootloader needs two firmware files. Download them from the
+official firmware repo and drop them into `dist/`:
+
+- [`start4.elf`](https://github.com/raspberrypi/firmware/blob/master/boot/start4.elf)
+- [`fixup4.dat`](https://github.com/raspberrypi/firmware/blob/master/boot/fixup4.dat)
+
+```bash
+cd dist
+curl -LO https://github.com/raspberrypi/firmware/raw/master/boot/start4.elf
+curl -LO https://github.com/raspberrypi/firmware/raw/master/boot/fixup4.dat
+```
+
+> Pi 4 loads `bootcode.bin` from its onboard EEPROM, so you do **not** need it on the SD card.
+
+`dist/` should now contain: `start4.elf`, `fixup4.dat`, `config.txt`, `kernel8.img`.
+
+### 3. Format the SD card and copy the files
+
+> ⚠️ The FAT32 driver assumes the filesystem starts at **LBA 0** (no MBR/GPT).
+> Format the card as a **single FAT32 volume**, then copy the four files to its root.
+
+On macOS:
+
+```bash
+diskutil list                                   # find your card, e.g. /dev/disk4
+diskutil eraseDisk FAT32 RNOS MBRFormat /dev/disk4
+cp dist/* /Volumes/RNOS/
+diskutil eject /dev/disk4
+```
+
+### 4. Wire it up and boot
+
+1. Connect HDMI to a monitor or capture card.
+2. Connect a **3.3V USB-to-serial adapter** to the Pi:
+   - adapter **GND** → Pi pin 6 (GND)
+   - adapter **RX** → Pi pin 8 (GPIO14 / TXD)
+   - adapter **TX** → Pi pin 10 (GPIO15 / RXD)
+3. On your host, open the serial console at **115200 baud**, 8N1:
+   ```bash
+   # macOS (device name varies)
+   screen /dev/tty.usbserial-XXXX 115200
+   # Linux
+   screen /dev/ttyUSB0 115200
+   ```
+4. Power the Pi. The HDMI shows the banner + demo; type commands in the serial terminal.
+
+---
+
+## 🎬 Recording the demo video
+
+Goal: one clean take showing the OS booting and being driven live.
+
+1. **Frame both outputs.** Put the HDMI display (or capture-card window) and your
+   serial-terminal window side by side so the video shows on-screen output *and*
+   your typed commands.
+2. **Power-cycle on camera** so the banner and the auto-demo (FAT32 listing + RT
+   ticks) appear from a cold boot — that's the strongest opening shot.
+3. **Drive the shell** for the interactive segment:
+   ```
+   help
+   ls
+   write demo.txt RealNetOS is alive
+   cat demo.txt
+   rt
+   ticks
+   ```
+4. **Show real-time behavior:** run `rt` (meets deadlines) then `rt-stress`
+   (intentionally overruns and counts `deadline_misses`) to contrast them.
+5. If you can't wire serial, you can still record the **QEMU graphical** run
+   (`make run-graphic`) as a fallback — same software, emulated display.
+
+---
+
+## 🗺 Roadmap (honest, in priority order)
+
+1. **Fix EL0 user-mode return** so the user-space shell/apps actually run.
+2. **Timer-interrupt-driven preemption** for true (not cooperative) RT scheduling.
+3. **USB host stack (DWC2)** → wired **USB keyboard** (HID) for on-device input.
+4. **SDIO + brcmfmac firmware** → WiFi MAC, then a WPA2 supplicant.
+5. **UART HCI Bluetooth** (firmware patch → L2CAP → HID) for BT keyboard/mouse.
+
+Items 3–5 are large, multi-session efforts and are not started.
+
+---
+
+## 🧱 Phase history
+
+- **Phase 1** Microkernel boot, UART, vector table, syscall trap scaffolding
+- **Phase 2** Real-time scheduler (priority + round-robin, deadlines, sleep/yield)
+- **Phase 3** Signal handling + user I/O syscalls *(EL0 runtime blocked)*
+- **Phase 4** Ethernet + IPv4 + UDP + TCP stack
+- **Phase 4.4** Multithreaded RX/TX engine with lockless queues
+- **Phase 5** User apps: TCP echo, sensor task, CLI shell *(EL0 runtime blocked)*
+- **Phase 6** Zero-copy networking with DMA RX/TX rings (GENET MMIO)
+- **Phase 7** VFS + FAT32 (read/write, subdirs, cluster chains) on simulated SD
 
 ---
 
 ## 🙌 Credits
 
-Designed and implemented by **Shinit Dinesh Shetty**  
-Target Platform: Raspberry Pi 4  
-Toolchain: `aarch64-none-elf-gcc`, `QEMU`, `make`
-
----
+Designed and implemented by **Shinit Dinesh Shetty**
+Target: Raspberry Pi 4 · Toolchain: `aarch64-none-elf-gcc`, QEMU, `make`
 
 ## 📎 License
 
-MIT License — Use, modify, and share freely.
+MIT — use, modify, and share freely.

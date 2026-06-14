@@ -4,6 +4,10 @@
 #ifndef GENET_H
 #define GENET_H
 
+#ifndef ENABLE_GENET
+#define ENABLE_GENET 0
+#endif
+
 #define GENET_BASE 0xFD580000UL
 #define GENET_DMA_BASE (GENET_BASE + 0x800)
 

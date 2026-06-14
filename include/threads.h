@@ -1,5 +1,6 @@
 #include "ipc.h"
 #include "signal.h"
+#include "user_ctx.h"
 
 #ifndef THREADS_H
 #define THREADS_H
@@ -12,6 +13,7 @@ extern int last_scheduled[MAX_PRIORITY_LEVELS];
 extern unsigned long system_ticks;
 extern void user1_entry(void);
 extern void user2_entry(void);
+extern void kernel_shell_entry(void);
 
 typedef struct {
     unsigned long x19;  // Callee-saved
@@ -47,6 +49,7 @@ typedef struct {
     mailbox_t mailbox;
     unsigned char* user_stack;
     void (*user_entry)(void);
+    user_ctx_t user_ctx;
     unsigned int pending_signal;
     signalhandler_t signal_handlers[MAX_SIGNALS];
     unsigned long saved_pc;

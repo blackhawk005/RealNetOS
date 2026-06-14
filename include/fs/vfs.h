@@ -30,6 +30,9 @@ struct file_ops {
 struct vnode_ops {
     int (*lookup)(struct vnode* dir_node, const char* name, struct vnode** target);
     int (*create)(struct vnode* dir_node, const char* name, struct vnode** target);
+    int (*readdir)(struct vnode* dir_node, int (*cb)(const char* name, int is_dir, void* ctx), void* ctx);
+    int (*mkdir)(struct vnode* dir_node, const char* name, struct vnode** target);
+    int (*unlink)(struct vnode* dir_node, const char* name);
 };
 
 struct filesystem {
@@ -49,7 +52,13 @@ struct dentry {
 };
 
 int register_filesystem(struct filesystem* fs);
+int vfs_mount(struct filesystem* fs);
 int vfs_open(const char* pathname, file_t** target);
+int vfs_create(const char* pathname, file_t** target);
+int vfs_list_root(int (*cb)(const char* name, int is_dir, void* ctx), void* ctx);
+int vfs_list_dir(const char* pathname, int (*cb)(const char* name, int is_dir, void* ctx), void* ctx);
+int vfs_mkdir(const char* pathname);
+int vfs_unlink(const char* pathname);
 int vfs_close(file_t* file);
 int vfs_read(file_t* file, void* buf, size_t len);
 int vfs_write(file_t* file, const void* buf, size_t len);

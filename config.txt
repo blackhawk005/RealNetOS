@@ -1,0 +1,20 @@
+# RealNetOS boot config for Raspberry Pi 4
+# Copy this file, kernel8.img, and the Pi firmware onto a FAT32 SD card.
+
+# Run the CPU in 64-bit (AArch64) mode
+arm_64bit=1
+
+# Load our bare-metal kernel instead of Linux
+kernel=kernel8.img
+
+# Enable the PL011 UART on GPIO14/15 for the serial console / shell input
+enable_uart=1
+
+# Keep HDMI active even if no display is detected at boot (helps capture cards)
+hdmi_force_hotplug=1
+
+# Use the full panel, no black border, for a clean recording
+disable_overscan=1
+
+# Skip the firmware rainbow splash so our banner is the first thing on screen
+disable_splash=1

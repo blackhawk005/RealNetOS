@@ -5,6 +5,7 @@
 extern struct filesystem fat32_fs;
 
 struct fat32_fs_info {
+    uint32_t partition_lba;
     uint32_t bytes_per_sector;
     uint32_t sectors_per_cluster;
     uint32_t reserved_sector_count;

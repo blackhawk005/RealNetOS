@@ -3,18 +3,22 @@
 #include "../include/ipc.h"
 #include "../include/uart.h"
 #include "../include/net/tcp.h"
+#include "../include/timer.h"
 
 extern thread_t threads[MAX_THREADS];
 extern int current;
 
 int syscall_dispatcher(syscall_id_t id, unsigned long arg0, unsigned long arg1){
+    timer_update_ticks();
+    static int dbg_ticks = 0;
+    static int dbg_write = 0;
     switch (id) {
         case SYSCALL_SLEEP:
             sleep(arg0);
-            return 0;
+            return 1;
         case SYSCALL_YIELD:
             yield();
-            return 0;
+            return 1;
         case SYSCALL_SEND:
             return send((int)arg0, (const char*)arg1);
         case SYSCALL_RECEIVE:
@@ -30,6 +34,10 @@ int syscall_dispatcher(syscall_id_t id, unsigned long arg0, unsigned long arg1){
         case SYSCALL_RETURN:
             return sys_return_from_signal();
         case SYSCALL_WRITE:
+            if (dbg_write < 3) {
+                uart_putc('W');
+                dbg_write++;
+            }
             return sys_write((int)arg0, (const char*)arg1);
         case SYSCALL_READ:
             return sys_read((int)arg0, (char*)arg1);
@@ -40,6 +48,10 @@ int syscall_dispatcher(syscall_id_t id, unsigned long arg0, unsigned long arg1){
         case SYSCALL_TCP_RECEIVE:
             return tcp_receive((char*)arg0, (int*)arg1);
         case SYSCALL_TICKS:
+            if (dbg_ticks < 5) {
+                uart_putc('T');
+                dbg_ticks++;
+            }
             return system_ticks;
         default:
             return -1;
@@ -64,6 +76,7 @@ int sys_receive(void* out_msg){
 
 int sys_return_from_signal(){
     threads[current].user_entry = (void*)threads[current].saved_pc;
+    threads[current].user_ctx.elr_el1 = threads[current].saved_pc;
     return 0;
 }
 
@@ -78,9 +91,7 @@ int sys_write(int fd, const char* buf){
 
 int sys_read(int fd, char* buf){
     if (fd == 0){
-        char c = uart_getc();
-        *buf = c;
-        return 1;
+        return uart_try_getc(buf);
     }
     return -1;
 }

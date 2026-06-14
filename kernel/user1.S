@@ -6,6 +6,17 @@
 .type user_signal_handler, %function
 
 user1_entry:
+    // Direct UART write to prove EL0 code executes
+    ldr x2, =0xFE201000     // UART0_DR
+    mov w3, #'u'
+    str w3, [x2]
+
+    // Print startup banner via syscall to verify EL0 SVC path
+    mov x0, #1              // fd = 1
+    ldr x1, =msg_start
+    mov x8, #8              // SYSCALL_WRITE
+    svc #0
+
     // Register signal handler: sys_signal(SIG_USER, handler)
     mov x0, #1              // signal ID = SIG_USER
     ldr x1, =handler        // handler function address
@@ -45,5 +56,8 @@ msg_main:
 msg_signal:
     .asciz "From User 1 (signal)\n"
 
+msg_start:
+    .asciz "[U1] EL0 started\n"
+
 handler:
-    .word user_signal_handler
+    .quad user_signal_handler

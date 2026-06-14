@@ -13,19 +13,30 @@ static int tx_index = 0;
 static int rx_index = 0;
 
 void genet_init(){
-    uart_puts("Initializint GENET Ethernet..\n");
+    if (!ENABLE_GENET) {
+        uart_puts("GENET disabled (likely running on QEMU).\n");
+        return;
+    }
 
+    uart_puts("Initializing GENET Ethernet..\n");
+
+    uart_puts("GENET: setup RX ring\n");
     genet_setup_rx_ring();
 
     // Bring up MAC
+    uart_puts("GENET: enable MAC\n");
     MMIO32(GENET_MAC_CTRL) |= 0x1;
 
+    uart_puts("GENET: setup RX ring (2)\n");
     genet_setup_rx_ring();
 
     uart_puts("GENET Ethernet initialized.\n");
 }
 
 void genet_send(const char *data, int len) {
+    if (!ENABLE_GENET) {
+        return;
+    }
     // TODO: Setup DMA buffer and transmit
     if (len > ETH_FRAME_SIZE){
         uart_puts("TX: Frame too large\n");
@@ -50,6 +61,9 @@ void genet_send(const char *data, int len) {
 }
 
 int genet_recv(char *buf) {
+    if (!ENABLE_GENET) {
+        return 0;
+    }
     // TODO: Poll RX descriptor for received packet
     dma_desc_t* desc = &rx_ring[rx_index];
     if (!(desc->status & 0x80000000)){
@@ -69,6 +83,9 @@ int genet_recv(char *buf) {
 }
 
 void genet_setup_rx_ring(void){
+    if (!ENABLE_GENET) {
+        return;
+    }
     for (int i = 0; i < GENET_DMA_DESC_COUNT; i++){
         rx_ring[i].addr_lo = (uint32_t)((uint64_t)&rx_buffers[i] & 0xFFFFFFFF);
         rx_ring[i].addr_hi = (uint32_t)(((uint64_t)&rx_buffers[i] >> 32) & 0xFFFFFFFF);
@@ -83,6 +100,9 @@ void genet_setup_rx_ring(void){
 }
 
 void genet_handle_rx(void){
+    if (!ENABLE_GENET) {
+        return;
+    }
     char buf[ETH_FRAME_SIZE];
     int len;
 
@@ -93,5 +113,8 @@ void genet_handle_rx(void){
 
 
 void genet_poll(void) {
+    if (!ENABLE_GENET) {
+        return;
+    }
     genet_handle_rx();
 }

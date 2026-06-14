@@ -1,5 +1,5 @@
 #include "../include/user/sensor_task.h"
-#include "../include/syscall.h"
+#include "../include/user_syscall.h"
 #include "../include/uart.h"
 #include "../include/lib.h"
 
@@ -21,7 +21,7 @@ void start_sensor_polling_task() {
         buf[len++] = '\n';
         buf[len] = '\0';
 
-        sys_write(1, buf);       // Print to UART
-        sys_sleep(10);           // Sleep for 10 ticks
+        u_sys_write(1, buf);       // Print to UART
+        u_sys_sleep(10);           // Sleep for 10 ticks
     }
 }
